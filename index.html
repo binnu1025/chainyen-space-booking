@@ -103,6 +103,8 @@
   button.btn:disabled{opacity:.45;cursor:default}
   button.sm{padding:6px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);
     font-size:13px;color:var(--bad);cursor:pointer;flex:none}
+  .bact{display:flex;gap:6px;flex:none}
+  button.sm.share{color:var(--accent)}
   .actions{padding:12px 16px 16px}
 
   /* ---------- 底部表單 / 確認框 ---------- */
@@ -306,7 +308,8 @@ function offerShare(text, doneTitle){
   if (!liff.isApiAvailable('shareTargetPicker')) { toast(doneTitle); return Promise.resolve(); }
   return confirmSheet({
     title: doneTitle,
-    lead: '這次不是從群組裡打開的，系統沒辦法自動通知。要分享到群組讓大家知道嗎？',
+    lead: '這次不是從群組裡打開的，系統沒辦法自動通知。要分享到群組讓大家知道嗎？' +
+          '（現在先跳過也沒關係，之後在借用旁邊按「分享」就可以）',
     preview: text, previewLabel: '訊息預覽',
     cancel: '不用', ok: '分享到群組'
   }).then(function(yes){
@@ -380,8 +383,7 @@ function dayHtml(date){
   var h = '<div class="dayhead"><b>' + esc(dateLabel(date)) + '</b>' +
           (date === todayStr() ? '<span class="chip">今天</span>' : '') + '</div><div class="info">';
   if (duty && duty.off) {
-    h += '<div class="r"><span class="k">活動</span><span class="ev">' + esc(duty.note || '團隊活動') +
-         '<span class="muted">（場地仍可借用）</span></span></div>';
+    h += '<div class="r"><span class="k">活動</span><span class="ev">' + esc(duty.note || '團隊活動') + '</span></div>';
   } else if (duty && (duty.a || duty.b)) {
     h += '<div class="r"><span class="k">值班</span><span>A段 12–16　' + esc(duty.a || '—') + '</span></div>' +
          '<div class="r"><span class="k"></span><span>B段 15–19　' + esc(duty.b || '—') + '</span></div>';
@@ -396,7 +398,7 @@ function dayHtml(date){
          '<div class="t"><div class="tm">' + hh(b.start) + '–' + hh(b.end) +
          (b.mine ? '<span class="mine">我的</span>' : '') + '</div>' +
          '<div class="ds">' + esc(b.purpose) + '・約 ' + esc(b.people) + ' 人・' + esc(b.name) + '</div></div>' +
-         (b.mine && !past ? '<button class="sm" data-cancel="' + esc(b.id) + '">取消</button>' : '') +
+         (b.mine && !past ? myButtons(b.id) : '') +
          '</div>';
   });
   h += '</div><div class="actions">' +
@@ -433,7 +435,7 @@ function renderMine(){
     h += '<div class="bk"><span class="zb ' + b.zone + '">' + esc(ZONE_LABEL[b.zone]) + '</span>' +
          '<div class="t"><div class="tm">' + esc(dateLabel(b.date)) + '　' + hh(b.start) + '–' + hh(b.end) + '</div>' +
          '<div class="ds">' + esc(b.purpose) + '・約 ' + esc(b.people) + ' 人</div></div>' +
-         '<button class="sm" data-cancel="' + esc(b.id) + '">取消</button></div>';
+         myButtons(b.id) + '</div>';
   });
   $('main').innerHTML = h + '</div>';
 }
@@ -553,6 +555,41 @@ function submitForm(formSheet){
 }
 
 // ============================================================
+// 分享（借好當下錯過了，之後隨時可以再發一次）
+// ============================================================
+function myButtons(id){
+  return '<span class="bact"><button class="sm share" data-share="' + esc(id) + '">分享</button>' +
+         '<button class="sm" data-cancel="' + esc(id) + '">取消</button></span>';
+}
+
+function shareBooking(id){
+  var b = findBooking(id);
+  if (!b) return;
+  var text = bookMsg(b);
+  if (S.canSend) {
+    confirmSheet({
+      title: '發到群組',
+      lead: '會以你的身分，在你點開連結的那個群組發出這則借用通知。',
+      preview: text, previewLabel: '訊息預覽', ok: '發送'
+    }).then(function(yes){
+      if (!yes) return;
+      liff.sendMessages([{ type: 'text', text: text }])
+        .then(function(){ toast('已發到群組'); })
+        .catch(function(){ sharePicker(text); });
+    });
+  } else {
+    sharePicker(text);                                   // 選群組的畫面本身就是確認步驟
+  }
+}
+
+function sharePicker(text){
+  if (!liff.isApiAvailable('shareTargetPicker')) { toast('這個環境無法分享，請從 LINE 群組裡打開'); return; }
+  liff.shareTargetPicker([{ type: 'text', text: text }])
+    .then(function(r){ if (r) toast('已分享到群組'); })
+    .catch(function(e){ toast('分享失敗：' + (e && e.message || e)); });
+}
+
+// ============================================================
 // 取消
 // ============================================================
 function findBooking(id){
@@ -598,6 +635,8 @@ $('main').addEventListener('click', function(e){
     S.sel = t.getAttribute('data-day'); renderCal();
   } else if (t.getAttribute('data-act') === 'book') {
     openBookForm(S.sel);
+  } else if (t.hasAttribute('data-share')) {
+    shareBooking(t.getAttribute('data-share'));
   } else if (t.hasAttribute('data-cancel')) {
     cancelBooking(t.getAttribute('data-cancel'));
   }
