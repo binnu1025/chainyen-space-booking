@@ -70,6 +70,40 @@
     margin:6px 0 0;padding:10px;border-radius:6px;background:#F6F7F9;
     font-size:11.5px;line-height:1.5;overflow:auto;white-space:pre-wrap;word-break:break-all;
   }
+  /* ---- 確認框（取代手機內建的 confirm） ---- */
+  .sheet-mask{
+    position:fixed;inset:0;background:rgba(21,24,28,.45);z-index:40;
+    display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;transition:opacity .2s;
+  }
+  .sheet-mask.show{opacity:1}
+  .sheet{
+    width:100%;max-width:520px;background:var(--surface);
+    border-radius:16px 16px 0 0;padding:20px 20px calc(18px + env(safe-area-inset-bottom));
+    transform:translateY(24px);transition:transform .22s;
+    box-shadow:0 -6px 24px rgba(0,0,0,.12);
+  }
+  .sheet-mask.show .sheet{transform:none}
+  .sheet .grip{width:36px;height:4px;border-radius:2px;background:#D5DAE0;margin:-6px auto 14px}
+  .sheet h3{margin:0 0 6px;font-size:17px;font-weight:600}
+  .sheet .lead{margin:0 0 14px;font-size:14px;color:var(--ink-2)}
+  .sheet .target{
+    display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
+    background:var(--accent-weak);color:var(--accent);font-weight:600;font-size:15px;margin-bottom:12px;
+  }
+  .sheet .target i{
+    font-style:normal;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:13px;flex:none;
+  }
+  .sheet .plabel{font-size:12px;color:var(--ink-3);margin:2px 0 6px}
+  .sheet .bubble{
+    display:inline-block;max-width:100%;padding:9px 12px;border-radius:16px 16px 4px 16px;
+    background:#E3F4D9;color:#1E2A1A;font-size:14px;line-height:1.5;word-break:break-word;
+  }
+  .sheet .pwrap{text-align:right;margin-bottom:18px}
+  .sheet .acts{display:flex;gap:10px}
+  .sheet .acts button{flex:1}
+
   .toast{
     position:fixed;left:50%;bottom:24px;transform:translate(-50%,80px);opacity:0;
     background:#15181C;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;
@@ -159,10 +193,45 @@ function api(action, extra){
 var debugInfo = {};
 function showDebug(){ $('debug').textContent = JSON.stringify(debugInfo, null, 2); }
 
+/**
+ * 頁面風格的確認框，回傳 Promise<boolean>。
+ * opts: { title, lead, target, preview, ok }
+ */
+function confirmSheet(opts){
+  return new Promise(function(resolve){
+    var mask = document.createElement('div');
+    mask.className = 'sheet-mask';
+    mask.innerHTML =
+      '<div class="sheet" role="dialog" aria-modal="true">' +
+        '<div class="grip"></div>' +
+        '<h3>' + esc(opts.title) + '</h3>' +
+        (opts.lead ? '<p class="lead">' + esc(opts.lead) + '</p>' : '') +
+        (opts.target ? '<div class="target"><i>群</i><span>' + esc(opts.target) + '</span></div>' : '') +
+        (opts.preview ? '<div class="plabel">訊息預覽</div><div class="pwrap"><span class="bubble">' +
+                        esc(opts.preview) + '</span></div>' : '') +
+        '<div class="acts"><button data-r="0">取消</button>' +
+        '<button class="pri" data-r="1">' + esc(opts.ok || '確定') + '</button></div>' +
+      '</div>';
+    document.body.appendChild(mask);
+    requestAnimationFrame(function(){ mask.classList.add('show'); });
+    function close(v){
+      mask.classList.remove('show');
+      setTimeout(function(){ mask.remove(); }, 200);
+      resolve(v);
+    }
+    mask.onclick = function(e){
+      if (e.target === mask) return close(false);          // 點外面 = 取消
+      var r = e.target.getAttribute && e.target.getAttribute('data-r');
+      if (r !== null && r !== undefined) close(r === '1');
+    };
+  });
+}
+
 /** 寫清楚「自動發送」會發到哪裡；name 是後端查到的群組名稱，查不到就用聊天室類型描述 */
 var sendWhere = '';
 function setSendTarget(canSend, type, name){
-  sendWhere = name ? '「' + name + '」' : '這個' + (CONTEXT_LABEL[type] || '聊天室');
+  // LINE 不一定會把群組身分給網頁；查不到名字時，用「你點開連結的那個…」描述
+  sendWhere = name ? '「' + name + '」' : '你點開連結的那個' + (CONTEXT_LABEL[type] || '聊天室');
   if (canSend) {
     $('vSend').innerHTML = pill('ok', '可以') + '<div class="sub">會發到' + esc(sendWhere) + '</div>';
     $('bSend').textContent = '發測試訊息到' + sendWhere;
@@ -300,13 +369,21 @@ function start(){
 }
 
 $('bSend').onclick = function(){
-  if (!confirm('會以你的身分，發一則測試訊息到' + sendWhere + '。確定？')) return;
-  liff.sendMessages([{ type: 'text', text: TEST_TEXT }])
-    .then(function(){ toast('已發送到' + sendWhere); })
-    .catch(function(e){
-      debugInfo.sendError = String(e && e.message || e); showDebug();
-      toast('發送失敗：' + (e && e.message || e));
-    });
+  confirmSheet({
+    title: '發送測試訊息',
+    lead: '會以你本人的身分發出這則訊息，群組裡的人都看得到。',
+    target: sendWhere.replace(/^「|」$/g, ''),
+    preview: TEST_TEXT,
+    ok: '確定發送'
+  }).then(function(yes){
+    if (!yes) return;
+    liff.sendMessages([{ type: 'text', text: TEST_TEXT }])
+      .then(function(){ toast('已發送'); })
+      .catch(function(e){
+        debugInfo.sendError = String(e && e.message || e); showDebug();
+        toast('發送失敗：' + (e && e.message || e));
+      });
+  });
 };
 
 $('bShare').onclick = function(){
