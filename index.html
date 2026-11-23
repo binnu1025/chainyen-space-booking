@@ -30,6 +30,7 @@
   header{background:var(--bar);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px}
   header h1{margin:0;flex:1;font-size:16px;font-weight:600;letter-spacing:.03em}
   header img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333D4A}
+  header .role{font-size:11.5px;padding:2px 9px;border-radius:99px;background:#3A4654;color:#E6ECF2}
   .tabs{display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);
     position:sticky;top:0;z-index:5}
   .tabs button{flex:1;padding:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--surface);
@@ -158,6 +159,7 @@
 
 <header>
   <h1>群雁空間 · 場地借用</h1>
+  <span id="role" class="role" hidden>會長</span>
   <img id="avatar" alt="" hidden>
 </header>
 <nav class="tabs" id="tabs" hidden>
@@ -292,11 +294,11 @@ function bookMsg(b){
     '\n用途：' + b.purpose + '（約 ' + b.people + ' 人）' +
     '\n借用人：' + (b.name || (S.me && S.me.name) || '');
 }
-function cancelMsg(b, canceller){
+function cancelMsg(b, byPresident){
   return '【取消借用】\n' + dateLabel(b.date) + ' ' + hh(b.start) + '–' + hh(b.end) + '　' + ZONE_LABEL[b.zone] +
     '\n用途：' + b.purpose +
     '\n借用人：' + (b.name || '') +
-    '\n取消人：' + (canceller || (S.me && S.me.name) || '') +
+    '\n取消人：' + ((S.me && S.me.name) || '') + (byPresident ? '（會長）' : '') +
     '\n這個時段已空出來';
 }
 
@@ -403,7 +405,8 @@ function dayHtml(date){
          '<div class="t"><div class="tm">' + hh(b.start) + '–' + hh(b.end) +
          (b.mine ? '<span class="mine">我的</span>' : '') + '</div>' +
          '<div class="ds">' + esc(b.purpose) + '・約 ' + esc(b.people) + ' 人・' + esc(b.name) + '</div></div>' +
-         (b.mine && !past ? myButtons(b.id) : '') +
+         (past ? '' : b.mine ? myButtons(b.id)
+               : b.canCancel ? '<button class="sm" data-cancel="' + esc(b.id) + '">取消</button>' : '') +
          '</div>';
   });
   h += '</div><div class="actions">' +
@@ -607,11 +610,13 @@ function findBooking(id){
 function cancelBooking(id){
   var b = findBooking(id);
   if (!b) return;
+  var others = !b.mine;                                    // 會長取消別人的
   confirmSheet({
-    title: '取消這筆借用？',
-    html: summaryHtml(b),
+    title: others ? '以會長身分取消這筆借用？' : '取消這筆借用？',
+    html: summaryHtml(b) + (others
+      ? '<div class="hint bad" style="margin-top:10px">這是「' + esc(b.name) + '」的借用，取消後無法復原。</div>' : ''),
     lead: S.canSend ? '取消後會在群組通知大家這個時段空出來了。' : '取消後可以選擇分享到群組。',
-    preview: cancelMsg(b),
+    preview: cancelMsg(b, others),
     cancel: '不取消', ok: '確定取消'
   }).then(function(yes){
     if (!yes) return;
@@ -620,7 +625,7 @@ function cancelBooking(id){
       S.mine = null;
       return loadMonth(ymOf(item.date), true).then(function(){
         if (S.tab === 'cal') renderCal(); else renderMine();
-        return notify(cancelMsg(item), '已取消');
+        return notify(cancelMsg(item, item.byPresident), '已取消');
       });
     }).catch(function(e){ toast(e.message); });
   });
@@ -686,6 +691,7 @@ function boot(){
       clearTimeout(guard);
       S.me = res.me;
       if (S.me.picture) { $('avatar').src = S.me.picture; $('avatar').hidden = false; }
+      if (S.me.isPresident) $('role').hidden = false;
       if (!S.me.isMember) {
         $('main').innerHTML = '<div class="card pad center"><b>無法使用</b>' +
           '<p class="muted" style="margin:8px 0 0">場地借用只開放「' + esc(S.me.groupName || '群組') +
