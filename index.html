@@ -159,7 +159,7 @@
 
 <header>
   <h1>群雁空間 · 場地借用</h1>
-  <span id="role" class="role" hidden>會長</span>
+  <span id="role" class="role" hidden>管理者</span>
   <img id="avatar" alt="" hidden>
 </header>
 <nav class="tabs" id="tabs" hidden>
@@ -298,7 +298,7 @@ function cancelMsg(b, byPresident){
   return '【取消借用】\n' + dateLabel(b.date) + ' ' + hh(b.start) + '–' + hh(b.end) + '　' + ZONE_LABEL[b.zone] +
     '\n用途：' + b.purpose +
     '\n借用人：' + (b.name || '') +
-    '\n取消人：' + ((S.me && S.me.name) || '') + (byPresident ? '（會長）' : '') +
+    '\n取消人：' + ((S.me && S.me.name) || '') + (byPresident ? '（管理者）' : '') +
     '\n這個時段已空出來';
 }
 
@@ -610,9 +610,9 @@ function findBooking(id){
 function cancelBooking(id){
   var b = findBooking(id);
   if (!b) return;
-  var others = !b.mine;                                    // 會長取消別人的
+  var others = !b.mine;                                    // 管理者取消別人的
   confirmSheet({
-    title: others ? '以會長身分取消這筆借用？' : '取消這筆借用？',
+    title: others ? '以管理者身分取消這筆借用？' : '取消這筆借用？',
     html: summaryHtml(b) + (others
       ? '<div class="hint bad" style="margin-top:10px">這是「' + esc(b.name) + '」的借用，取消後無法復原。</div>' : ''),
     lead: S.canSend ? '取消後會在群組通知大家這個時段空出來了。' : '取消後可以選擇分享到群組。',
