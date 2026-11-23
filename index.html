@@ -286,13 +286,18 @@ function summaryHtml(b){
 // ============================================================
 // 群組通知（以借用人本人身分發出，不花官方帳號額度）
 // ============================================================
+// 訊息不放連結：LINE 會抓連結預覽，畫面雜亂，也可能顯示到舊版頁面內容
 function bookMsg(b){
   return '【場地借用】\n' + dateLabel(b.date) + ' ' + hh(b.start) + '–' + hh(b.end) + '　' + ZONE_LABEL[b.zone] +
-    '\n用途：' + b.purpose + '（約 ' + b.people + ' 人）\n查看場地：' + LIFF_URL;
+    '\n用途：' + b.purpose + '（約 ' + b.people + ' 人）' +
+    '\n借用人：' + (b.name || (S.me && S.me.name) || '');
 }
-function cancelMsg(b){
+function cancelMsg(b, canceller){
   return '【取消借用】\n' + dateLabel(b.date) + ' ' + hh(b.start) + '–' + hh(b.end) + '　' + ZONE_LABEL[b.zone] +
-    '\n用途：' + b.purpose + '\n這個時段已空出來';
+    '\n用途：' + b.purpose +
+    '\n借用人：' + (b.name || '') +
+    '\n取消人：' + (canceller || (S.me && S.me.name) || '') +
+    '\n這個時段已空出來';
 }
 
 /** 從群組打開 → 直接發；否則問要不要分享到群組 */
