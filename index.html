@@ -6,9 +6,12 @@
 <title>群雁空間 · 場地借用</title>
 <style>
   :root{
-    --bg:#F4F5F7; --surface:#FFFFFF; --line:#DDE1E6;
+    --bg:#F4F5F7; --surface:#FFFFFF; --sunken:#FAFBFC; --line:#DDE1E6; --line-2:#C7CDD5;
     --ink:#15181C; --ink-2:#5A6472; --ink-3:#8C96A3;
-    --accent:#1F4B73; --accent-weak:#EAF0F6;
+    --accent:#1F4B73; --accent-2:#2C6395; --accent-weak:#EAF0F6;
+    --zoneA:#2C6395; --zoneA-weak:#E6EEF6;
+    --zoneF:#3F7D5C; --zoneF-weak:#E7F2EC;
+    --event:#A8562F; --event-weak:#FBEFE6;
     --ok:#1D6748; --ok-weak:#EAF3EE;
     --bad:#A32B25; --bad-weak:#FAEDEC;
     --warn:#7E5A00; --warn-weak:#FAF3E0;
@@ -19,165 +22,200 @@
   body{
     font:15px/1.6 -apple-system,"Noto Sans TC","Microsoft JhengHei","Segoe UI",sans-serif;
     color:var(--ink); background:var(--bg); -webkit-font-smoothing:antialiased;
-    padding-bottom:env(safe-area-inset-bottom);
+    padding-bottom:calc(24px + env(safe-area-inset-bottom));
   }
-  header{
-    background:var(--bar); color:#fff; padding:14px 16px;
-    display:flex; align-items:center; gap:12px;
-  }
-  header .t{flex:1;min-width:0}
-  header h1{margin:0;font-size:16px;font-weight:600;letter-spacing:.03em}
-  header .s{font-size:12px;color:#9AA5B1;margin-top:1px}
-  header img{width:36px;height:36px;border-radius:50%;object-fit:cover;background:#333D4A}
-  .tag{
-    font-size:11px;padding:2px 8px;border-radius:99px;
-    background:#3A4654;color:#D7DEE6;white-space:nowrap;
-  }
-  main{max-width:560px;margin:0 auto;padding:16px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  .card + .card{margin-top:14px}
-  .card h2{
-    margin:0;padding:12px 16px;font-size:13px;font-weight:600;color:var(--ink-2);
-    border-bottom:1px solid var(--line);background:#FAFBFC;
-  }
-  .row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #EEF0F3}
-  .row:last-child{border-bottom:none}
-  .row .k{width:118px;flex:none;font-size:13px;color:var(--ink-2)}
-  .row .v{flex:1;min-width:0;font-weight:500}
-  .pill{
-    display:inline-block;padding:2px 10px;border-radius:99px;font-size:13px;font-weight:600;
-  }
-  .pill.ok{background:var(--ok-weak);color:var(--ok)}
-  .pill.bad{background:var(--bad-weak);color:var(--bad)}
-  .pill.warn{background:var(--warn-weak);color:var(--warn)}
-  .pill.wait{background:#EEF0F3;color:var(--ink-3)}
-  .sub{font-size:12px;color:var(--ink-3);font-weight:400;margin-top:2px}
-  .note{padding:12px 16px;font-size:13px;color:var(--ink-2)}
-  .btns{display:flex;flex-direction:column;gap:10px;padding:14px 16px}
-  button{
-    font:inherit;font-size:15px;padding:12px 14px;border-radius:8px;cursor:pointer;
-    border:1px solid var(--line);background:var(--surface);color:var(--ink);
-  }
-  button.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
-  button:disabled{opacity:.45;cursor:default}
-  .err{
-    margin:16px;padding:14px 16px;border-radius:10px;
-    background:var(--bad-weak);color:var(--bad);border:1px solid #EBC9C5;font-size:14px;
-  }
-  details{padding:0 16px 14px}
-  summary{cursor:pointer;font-size:12px;color:var(--ink-3);padding:6px 0}
-  pre{
-    margin:6px 0 0;padding:10px;border-radius:6px;background:#F6F7F9;
-    font-size:11.5px;line-height:1.5;overflow:auto;white-space:pre-wrap;word-break:break-all;
-  }
-  /* ---- 確認框（取代手機內建的 confirm） ---- */
-  .sheet-mask{
-    position:fixed;inset:0;background:rgba(21,24,28,.45);z-index:40;
-    display:flex;align-items:flex-end;justify-content:center;
-    opacity:0;transition:opacity .2s;
-  }
-  .sheet-mask.show{opacity:1}
-  .sheet{
-    width:100%;max-width:520px;background:var(--surface);
-    border-radius:16px 16px 0 0;padding:20px 20px calc(18px + env(safe-area-inset-bottom));
-    transform:translateY(24px);transition:transform .22s;
-    box-shadow:0 -6px 24px rgba(0,0,0,.12);
-  }
-  .sheet-mask.show .sheet{transform:none}
-  .sheet .grip{width:36px;height:4px;border-radius:2px;background:#D5DAE0;margin:-6px auto 14px}
-  .sheet h3{margin:0 0 6px;font-size:17px;font-weight:600}
-  .sheet .lead{margin:0 0 14px;font-size:14px;color:var(--ink-2)}
-  .sheet .target{
-    display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;
-    background:var(--accent-weak);color:var(--accent);font-weight:600;font-size:15px;margin-bottom:12px;
-  }
-  .sheet .target i{
-    font-style:normal;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;
-    display:flex;align-items:center;justify-content:center;font-size:13px;flex:none;
-  }
-  .sheet .plabel{font-size:12px;color:var(--ink-3);margin:2px 0 6px}
-  .sheet .bubble{
-    display:inline-block;max-width:100%;padding:9px 12px;border-radius:16px 16px 4px 16px;
-    background:#E3F4D9;color:#1E2A1A;font-size:14px;line-height:1.5;word-break:break-word;
-  }
-  .sheet .pwrap{text-align:right;margin-bottom:18px}
-  .sheet .acts{display:flex;gap:10px}
-  .sheet .acts button{flex:1}
+  button,input,select{font:inherit;color:inherit}
 
-  .toast{
-    position:fixed;left:50%;bottom:24px;transform:translate(-50%,80px);opacity:0;
-    background:#15181C;color:#fff;padding:10px 16px;border-radius:8px;font-size:14px;
-    transition:.25s;max-width:88%;text-align:center;
+  /* ---------- 頁首與分頁 ---------- */
+  header{background:var(--bar);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px}
+  header h1{margin:0;flex:1;font-size:16px;font-weight:600;letter-spacing:.03em}
+  header img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#333D4A}
+  .tabs{display:flex;gap:8px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:5}
+  .tabs button{flex:1;padding:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--surface);
+    font-size:15px;color:var(--ink-2);cursor:pointer}
+  .tabs button.on{background:var(--accent-weak);border-color:#BFD0E2;color:var(--accent);font-weight:600}
+
+  main{max-width:560px;margin:0 auto;padding:14px 16px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .card + .card{margin-top:14px}
+  .muted{color:var(--ink-3)}
+  .center{text-align:center}
+  .pad{padding:16px}
+
+  /* ---------- 月曆 ---------- */
+  .calhead{display:flex;align-items:center;justify-content:space-between;padding:12px 10px 4px}
+  .calhead b{font-size:17px;font-weight:600}
+  .navbtn{width:40px;height:36px;border:none;background:transparent;border-radius:8px;font-size:20px;
+    color:var(--ink-2);cursor:pointer}
+  .navbtn:active{background:var(--accent-weak)}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:4px 8px 10px}
+  .grid .wk{text-align:center;font-size:12px;color:var(--ink-3);padding:4px 0}
+  .day{
+    position:relative;height:52px;border-radius:10px;border:none;background:transparent;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;
   }
+  .day .n{font-size:15px;line-height:1.2;font-variant-numeric:tabular-nums}
+  .day.we .n{color:#A8562F}
+  .day.past .n{color:#C2C8D0}
+  .day.today .n{font-weight:700}
+  .day.today::after{content:'';position:absolute;inset:3px;border:1.5px solid var(--accent);border-radius:9px;pointer-events:none}
+  .day.sel{background:var(--accent)}
+  .day.sel .n{color:#fff}
+  .day .marks{display:flex;gap:3px;margin-top:5px;height:5px}
+  .day .marks i{width:12px;height:4px;border-radius:2px;background:transparent}
+  .day .marks i.a{background:var(--zoneA)}
+  .day .marks i.f{background:var(--zoneF)}
+  .day .ev{position:absolute;top:5px;right:6px;width:5px;height:5px;border-radius:50%;background:var(--event)}
+  .day.sel .marks i.a,.day.sel .marks i.f{background:#fff}
+  .day.sel .ev{background:#FFD8BF}
+  .day.pad{visibility:hidden}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;padding:0 16px 12px;font-size:12px;color:var(--ink-2)}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{display:inline-block;width:12px;height:4px;border-radius:2px}
+  .legend i.dot{width:6px;height:6px;border-radius:50%}
+
+  /* ---------- 單日 ---------- */
+  .dayhead{padding:14px 16px 10px;display:flex;align-items:baseline;gap:10px}
+  .dayhead b{font-size:18px;font-weight:600}
+  .chip{font-size:12px;padding:1px 8px;border-radius:99px;background:var(--accent-weak);color:var(--accent)}
+  .info{padding:0 16px 12px;font-size:14px}
+  .info .r{display:flex;gap:10px;padding:3px 0}
+  .info .k{width:44px;flex:none;color:var(--ink-3)}
+  .info .ev{color:var(--event)}
+  .blist{border-top:1px solid var(--line)}
+  .bk{display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid #EEF0F3}
+  .bk:last-child{border-bottom:none}
+  .zb{flex:none;min-width:46px;text-align:center;font-size:12.5px;font-weight:600;padding:3px 6px;border-radius:6px}
+  .zb.A{background:var(--zoneA-weak);color:var(--zoneA)}
+  .zb.F{background:var(--zoneF-weak);color:var(--zoneF)}
+  .zb.AF{background:#EFEAF5;color:#5C4787}
+  .bk .t{flex:1;min-width:0}
+  .bk .tm{font-weight:600;font-variant-numeric:tabular-nums}
+  .bk .ds{font-size:13px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis}
+  .bk .mine{font-size:11px;color:var(--accent);font-weight:600;margin-left:6px}
+  .empty{padding:18px 16px;text-align:center;color:var(--ink-3);font-size:14px}
+
+  button.btn{padding:12px 14px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);
+    font-size:15px;cursor:pointer}
+  button.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  button.btn.block{width:100%}
+  button.btn:disabled{opacity:.45;cursor:default}
+  button.sm{padding:6px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);
+    font-size:13px;color:var(--bad);cursor:pointer;flex:none}
+  .actions{padding:12px 16px 16px}
+
+  /* ---------- 底部表單 / 確認框 ---------- */
+  .mask{position:fixed;inset:0;background:rgba(21,24,28,.45);z-index:40;display:flex;align-items:flex-end;
+    justify-content:center;opacity:0;transition:opacity .2s}
+  .mask.show{opacity:1}
+  .sheet{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--surface);
+    border-radius:16px 16px 0 0;padding:20px 20px calc(18px + env(safe-area-inset-bottom));
+    transform:translateY(24px);transition:transform .22s;box-shadow:0 -6px 24px rgba(0,0,0,.12)}
+  .mask.show .sheet{transform:none}
+  .grip{width:36px;height:4px;border-radius:2px;background:#D5DAE0;margin:-6px auto 14px}
+  .sheet h3{margin:0 0 4px;font-size:17px;font-weight:600}
+  .sheet .lead{margin:0 0 14px;font-size:14px;color:var(--ink-2)}
+  .fl{font-size:13px;color:var(--ink-2);margin:14px 0 6px;font-weight:600}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;padding:10px 0;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);
+    font-size:15px;cursor:pointer}
+  .seg button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .times{display:flex;gap:8px;align-items:center}
+  .times select{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);font-size:16px}
+  .sheet input[type=text],.sheet input[type=number]{width:100%;padding:10px 12px;border-radius:10px;
+    border:1px solid var(--line-2);font-size:16px;background:var(--surface)}
+  .sheet input:focus,.sheet select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+  .hint{margin-top:10px;padding:9px 12px;border-radius:10px;font-size:13.5px}
+  .hint.ok{background:var(--ok-weak);color:var(--ok)}
+  .hint.bad{background:var(--bad-weak);color:var(--bad)}
+  .row2{display:flex;gap:10px}
+  .row2 > div{flex:1}
+  .row2 > div.n{flex:0 0 110px}
+  .acts{display:flex;gap:10px;margin-top:20px}
+  .acts .btn{flex:1}
+  .sum{padding:12px 14px;border-radius:10px;background:var(--sunken);border:1px solid var(--line);font-size:14.5px}
+  .sum .r{display:flex;gap:10px;padding:2px 0}
+  .sum .k{width:40px;flex:none;color:var(--ink-3)}
+  .plabel{font-size:12px;color:var(--ink-3);margin:14px 0 6px}
+  .bubble{display:inline-block;max-width:100%;padding:9px 12px;border-radius:16px 16px 4px 16px;
+    background:#E3F4D9;color:#1E2A1A;font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;text-align:left}
+  .pwrap{text-align:right}
+
+  .notice{margin:14px 16px 0;padding:12px 14px;border-radius:10px;font-size:14px}
+  .notice.bad{background:var(--bad-weak);color:var(--bad);border:1px solid #EBC9C5}
+  .loading{padding:40px 16px;text-align:center;color:var(--ink-3)}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,80px);opacity:0;background:#15181C;
+    color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;transition:.25s;max-width:88%;
+    text-align:center;z-index:60}
   .toast.show{transform:translate(-50%,0);opacity:1}
+  footer{max-width:560px;margin:10px auto 0;padding:0 16px;font-size:11.5px;color:var(--ink-3);text-align:center}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="t">
-    <h1>群雁空間 · 場地借用</h1>
-    <div class="s">連線測試版</div>
-  </div>
-  <span class="tag">測試中</span>
+  <h1>群雁空間 · 場地借用</h1>
   <img id="avatar" alt="" hidden>
 </header>
-
-<main id="main">
-  <div class="card">
-    <h2>連線檢查 <span id="stage" style="font-weight:400;color:var(--ink-3)">・載入中</span></h2>
-    <div class="row"><div class="k">LINE 登入</div><div class="v" id="vLogin"><span class="pill wait">檢查中</span></div></div>
-    <div class="row"><div class="k">群組成員</div><div class="v" id="vMember"><span class="pill wait">檢查中</span></div></div>
-    <div class="row"><div class="k">開啟位置</div><div class="v" id="vContext"><span class="pill wait">檢查中</span></div></div>
-    <div class="row"><div class="k">自動發群組通知</div><div class="v" id="vSend"><span class="pill wait">檢查中</span></div></div>
-  </div>
-
-  <div class="card">
-    <h2>通知測試</h2>
-    <div class="note">按下後會以<b>你本人的身分</b>發一則測試訊息。建議在<b>測試群組</b>裡試，不要在正式群組。</div>
-    <div class="btns">
-      <button class="pri" id="bSend" disabled>自動發送（需從群組聊天室打開）</button>
-      <button id="bShare" disabled>分享到群組（自己選要發到哪個群組）</button>
-    </div>
-    <details>
-      <summary>技術細節（回報問題時用）</summary>
-      <pre id="debug">—</pre>
-    </details>
-  </div>
-</main>
-
+<nav class="tabs" id="tabs" hidden>
+  <button data-tab="cal" class="on">場地狀況</button>
+  <button data-tab="mine">我的借用</button>
+</nav>
+<div id="notice"></div>
+<main id="main"><div class="loading">載入中…</div></main>
+<footer id="foot"></footer>
 <div class="toast" id="toast"></div>
 
-<!-- LINE 官方 LIFF SDK -->
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-// ------------------------------------------------------------
+// ============================================================
 // 設定（都是公開資訊，不是密碼；密碼類的東西絕對不要放在這個檔案）
-// ------------------------------------------------------------
-var LIFF_ID = '2012766187-3DZDUsfS';
-var API_URL = 'https://script.google.com/macros/s/AKfycbxphmopTn2lbEOIcYyldjN3JsQbifG8SaRszXqo_3KPhA9p3cbtIdemK5L1MbyvqWO1/exec';
-var TEST_TEXT = '（測試）群雁空間場地借用系統連線成功';
+// ============================================================
+var LIFF_ID  = '2012766187-3DZDUsfS';
+var LIFF_URL = 'https://liff.line.me/' + LIFF_ID;
+var API_URL  = 'https://script.google.com/macros/s/AKfycbxphmopTn2lbEOIcYyldjN3JsQbifG8SaRszXqo_3KPhA9p3cbtIdemK5L1MbyvqWO1/exec';
 
-var CONTEXT_LABEL = {
-  group: '群組聊天室', room: '多人聊天室', utou: '一對一聊天室',
-  square_chat: '社群聊天室', external: '外部瀏覽器', none: 'LINE 內（非聊天室）'
+var WK = ['日','一','二','三','四','五','六'];
+var ZONES = { A: ['A'], F: ['F'], AF: ['A','F'] };
+var ZONE_LABEL = { A: 'A區', F: 'F區', AF: 'A區＋F區' };
+var PRESETS = [ { k:'早', s:8, e:12 }, { k:'下午', s:12, e:18 }, { k:'晚', s:18, e:22 } ];
+
+// ============================================================
+// 狀態
+// ============================================================
+var S = {
+  me: null, canSend: false, ctxType: 'none',
+  tab: 'cal', ym: null, months: {},    // months['2026/12'] = 後端資料
+  sel: null,                           // 選取的日期 'YYYY/MM/DD'
+  mine: null
 };
 
+// ============================================================
+// 小工具
+// ============================================================
 function $(id){ return document.getElementById(id); }
-function pill(kind, text){ return '<span class="pill ' + kind + '">' + text + '</span>'; }
 function esc(s){
   return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function pad(n){ return ('0' + n).slice(-2); }
+function hh(h){ return pad(h) + ':00'; }
+function ymd(y, m, d){ return y + '/' + pad(m) + '/' + pad(d); }
+function ymOf(date){ return date.slice(0, 7); }
+function parts(date){ var t = date.split('/'); return { y: +t[0], m: +t[1], d: +t[2] }; }
+function dow(date){ var p = parts(date); return new Date(p.y, p.m - 1, p.d).getDay(); }
+function dateLabel(date){ var p = parts(date); return p.m + '/' + p.d + '（' + WK[dow(date)] + '）'; }
+function todayStr(){ var n = new Date(); return ymd(n.getFullYear(), n.getMonth() + 1, n.getDate()); }
+function zoneHit(a, b){ return ZONES[a].some(function(z){ return ZONES[b].indexOf(z) >= 0; }); }
+
 var tt;
 function toast(m){
   var t = $('toast'); t.textContent = m; t.className = 'toast show';
-  clearTimeout(tt); tt = setTimeout(function(){ t.className = 'toast'; }, 3200);
+  clearTimeout(tt); tt = setTimeout(function(){ t.className = 'toast'; }, 3400);
 }
-function fail(msg){
-  $('main').insertAdjacentHTML('afterbegin', '<div class="err">' + esc(msg) + '</div>');
-  var d = document.querySelector('details');
-  if (d) d.open = true;                                  // 出錯時自動展開，方便截圖回報
+function notice(msg){
+  $('notice').innerHTML = msg ? '<div class="notice bad">' + esc(msg) + '</div>' : '';
 }
 
 /** 呼叫 GAS 借用 API。用 text/plain 送 JSON，避免跨網域預檢請求 */
@@ -187,215 +225,442 @@ function api(action, extra){
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(body)
-  }).then(function(r){ return r.json(); });
-}
-
-var debugInfo = {};
-function showDebug(){ $('debug').textContent = JSON.stringify(debugInfo, null, 2); }
-
-/**
- * 頁面風格的確認框，回傳 Promise<boolean>。
- * opts: { title, lead, target, preview, ok }
- */
-function confirmSheet(opts){
-  return new Promise(function(resolve){
-    var mask = document.createElement('div');
-    mask.className = 'sheet-mask';
-    mask.innerHTML =
-      '<div class="sheet" role="dialog" aria-modal="true">' +
-        '<div class="grip"></div>' +
-        '<h3>' + esc(opts.title) + '</h3>' +
-        (opts.lead ? '<p class="lead">' + esc(opts.lead) + '</p>' : '') +
-        (opts.target ? '<div class="target"><i>群</i><span>' + esc(opts.target) + '</span></div>' : '') +
-        (opts.preview ? '<div class="plabel">訊息預覽</div><div class="pwrap"><span class="bubble">' +
-                        esc(opts.preview) + '</span></div>' : '') +
-        '<div class="acts"><button data-r="0">取消</button>' +
-        '<button class="pri" data-r="1">' + esc(opts.ok || '確定') + '</button></div>' +
-      '</div>';
-    document.body.appendChild(mask);
-    requestAnimationFrame(function(){ mask.classList.add('show'); });
-    function close(v){
-      mask.classList.remove('show');
-      setTimeout(function(){ mask.remove(); }, 200);
-      resolve(v);
-    }
-    mask.onclick = function(e){
-      if (e.target === mask) return close(false);          // 點外面 = 取消
-      var r = e.target.getAttribute && e.target.getAttribute('data-r');
-      if (r !== null && r !== undefined) close(r === '1');
-    };
+  }).then(function(r){ return r.json(); }).then(function(res){
+    if (!res.ok) throw new Error(res.error || '伺服器回應錯誤');
+    return res;
   });
 }
 
-/** 寫清楚「自動發送」會發到哪裡；name 是後端查到的群組名稱，查不到就用聊天室類型描述 */
-var sendWhere = '';
-function setSendTarget(canSend, type, name){
-  // LINE 不一定會把群組身分給網頁；查不到名字時，用「你點開連結的那個…」描述
-  sendWhere = name ? '「' + name + '」' : '你點開連結的那個' + (CONTEXT_LABEL[type] || '聊天室');
-  if (canSend) {
-    $('vSend').innerHTML = pill('ok', '可以') + '<div class="sub">會發到' + esc(sendWhere) + '</div>';
-    $('bSend').textContent = '發測試訊息到' + sendWhere;
+// ============================================================
+// 底部面板（表單與確認框共用）
+// ============================================================
+function openSheet(html, onClick){
+  var mask = document.createElement('div');
+  mask.className = 'mask';
+  mask.innerHTML = '<div class="sheet" role="dialog" aria-modal="true"><div class="grip"></div>' + html + '</div>';
+  document.body.appendChild(mask);
+  requestAnimationFrame(function(){ mask.classList.add('show'); });
+  var api_ = {
+    el: mask.querySelector('.sheet'),
+    close: function(){
+      mask.classList.remove('show');
+      setTimeout(function(){ mask.remove(); }, 200);
+    }
+  };
+  mask.addEventListener('click', function(e){
+    if (e.target === mask) { api_.close(); if (onClick) onClick('dismiss', e); return; }
+    if (onClick) onClick(e.target.closest('[data-act]') ? e.target.closest('[data-act]').getAttribute('data-act') : '', e);
+  });
+  return api_;
+}
+
+/** 確認框，回傳 Promise<boolean> */
+function confirmSheet(o){
+  return new Promise(function(resolve){
+    var sh = openSheet(
+      '<h3>' + esc(o.title) + '</h3>' +
+      (o.lead ? '<p class="lead">' + esc(o.lead) + '</p>' : '') +
+      (o.html || '') +
+      (o.preview ? '<div class="plabel">' + esc(o.previewLabel || '群組通知預覽') + '</div>' +
+                   '<div class="pwrap"><span class="bubble">' + esc(o.preview) + '</span></div>' : '') +
+      '<div class="acts"><button class="btn" data-act="no">' + esc(o.cancel || '取消') + '</button>' +
+      '<button class="btn pri" data-act="yes">' + esc(o.ok || '確定') + '</button></div>',
+      function(act){
+        if (act === 'dismiss') return resolve(false);
+        if (act === 'yes' || act === 'no') { sh.close(); resolve(act === 'yes'); }
+      });
+  });
+}
+
+function summaryHtml(b){
+  return '<div class="sum">' +
+    '<div class="r"><span class="k">日期</span><span>' + esc(dateLabel(b.date)) + '</span></div>' +
+    '<div class="r"><span class="k">時間</span><span>' + hh(b.start) + '–' + hh(b.end) + '</span></div>' +
+    '<div class="r"><span class="k">區域</span><span>' + esc(ZONE_LABEL[b.zone]) + '</span></div>' +
+    '<div class="r"><span class="k">用途</span><span>' + esc(b.purpose) + '（約 ' + esc(b.people) + ' 人）</span></div>' +
+    '</div>';
+}
+
+// ============================================================
+// 群組通知（以借用人本人身分發出，不花官方帳號額度）
+// ============================================================
+function bookMsg(b){
+  return '【場地借用】\n' + dateLabel(b.date) + ' ' + hh(b.start) + '–' + hh(b.end) + '　' + ZONE_LABEL[b.zone] +
+    '\n用途：' + b.purpose + '（約 ' + b.people + ' 人）\n查看場地：' + LIFF_URL;
+}
+function cancelMsg(b){
+  return '【取消借用】\n' + dateLabel(b.date) + ' ' + hh(b.start) + '–' + hh(b.end) + '　' + ZONE_LABEL[b.zone] +
+    '\n用途：' + b.purpose + '\n這個時段已空出來';
+}
+
+/** 從群組打開 → 直接發；否則問要不要分享到群組 */
+function notify(text, doneTitle){
+  if (S.canSend) {
+    return liff.sendMessages([{ type: 'text', text: text }])
+      .then(function(){ toast(doneTitle + '，已通知群組'); })
+      .catch(function(){ return offerShare(text, doneTitle); });
+  }
+  return offerShare(text, doneTitle);
+}
+function offerShare(text, doneTitle){
+  if (!liff.isApiAvailable('shareTargetPicker')) { toast(doneTitle); return Promise.resolve(); }
+  return confirmSheet({
+    title: doneTitle,
+    lead: '這次不是從群組裡打開的，系統沒辦法自動通知。要分享到群組讓大家知道嗎？',
+    preview: text, previewLabel: '訊息預覽',
+    cancel: '不用', ok: '分享到群組'
+  }).then(function(yes){
+    if (!yes) return;
+    return liff.shareTargetPicker([{ type: 'text', text: text }])
+      .then(function(r){ if (r) toast('已分享到群組'); })
+      .catch(function(e){ toast('分享失敗：' + (e && e.message || e)); });
+  });
+}
+
+// ============================================================
+// 資料
+// ============================================================
+function loadMonth(ym, force){
+  if (S.months[ym] && !force) return Promise.resolve(S.months[ym]);
+  return api('month', { ym: ym }).then(function(res){ S.months[ym] = res.data; return res.data; });
+}
+function bookingsOn(date){
+  var m = S.months[ymOf(date)];
+  return m ? m.bookings.filter(function(b){ return b.date === date; }) : [];
+}
+
+// ============================================================
+// 畫面：場地狀況
+// ============================================================
+function renderCal(){
+  var ym = S.ym, data = S.months[ym];
+  var y = +ym.slice(0, 4), m = +ym.slice(5, 7);
+  var first = new Date(y, m - 1, 1).getDay();
+  var dim = new Date(y, m, 0).getDate();
+  var today = todayStr();
+
+  var h = '<div class="card"><div class="calhead">' +
+    '<button class="navbtn" data-nav="-1" aria-label="上個月">‹</button>' +
+    '<b>' + y + ' 年 ' + m + ' 月</b>' +
+    '<button class="navbtn" data-nav="1" aria-label="下個月">›</button></div><div class="grid">';
+  WK.forEach(function(w){ h += '<div class="wk">' + w + '</div>'; });
+  for (var i = 0; i < first; i++) h += '<div class="day pad"></div>';
+  for (var d = 1; d <= dim; d++) {
+    var date = ymd(y, m, d), bs = data ? bookingsOn(date) : [];
+    var hasA = bs.some(function(b){ return ZONES[b.zone].indexOf('A') >= 0; });
+    var hasF = bs.some(function(b){ return ZONES[b.zone].indexOf('F') >= 0; });
+    var duty = data && data.duty[d];
+    var cls = ['day'];
+    var w = dow(date); if (w === 0 || w === 6) cls.push('we');
+    if (date < today) cls.push('past');
+    if (date === today) cls.push('today');
+    if (date === S.sel) cls.push('sel');
+    h += '<button class="' + cls.join(' ') + '" data-day="' + date + '">' +
+         (duty && duty.off ? '<span class="ev"></span>' : '') +
+         '<span class="n">' + d + '</span>' +
+         '<span class="marks"><i class="' + (hasA ? 'a' : '') + '"></i><i class="' + (hasF ? 'f' : '') + '"></i></span>' +
+         '</button>';
+  }
+  h += '</div><div class="legend">' +
+       '<span><i style="background:var(--zoneA)"></i>A區有人借</span>' +
+       '<span><i style="background:var(--zoneF)"></i>F區有人借</span>' +
+       '<span><i class="dot" style="background:var(--event)"></i>團隊活動</span></div></div>';
+
+  h += '<div class="card" id="daycard">' + (data ? dayHtml(S.sel) : '<div class="loading">載入中…</div>') + '</div>';
+  $('main').innerHTML = h;
+}
+
+function dayHtml(date){
+  var data = S.months[ymOf(date)];
+  var d = parts(date).d;
+  var duty = (data && data.duty[d]) || null;
+  var bs = bookingsOn(date);
+  var past = date < todayStr();
+
+  var h = '<div class="dayhead"><b>' + esc(dateLabel(date)) + '</b>' +
+          (date === todayStr() ? '<span class="chip">今天</span>' : '') + '</div><div class="info">';
+  if (duty && duty.off) {
+    h += '<div class="r"><span class="k">活動</span><span class="ev">' + esc(duty.note || '團隊活動') +
+         '<span class="muted">（場地仍可借用）</span></span></div>';
+  } else if (duty && (duty.a || duty.b)) {
+    h += '<div class="r"><span class="k">值班</span><span>A段 12–16　' + esc(duty.a || '—') + '</span></div>' +
+         '<div class="r"><span class="k"></span><span>B段 15–19　' + esc(duty.b || '—') + '</span></div>';
+    if (duty.note) h += '<div class="r"><span class="k">備註</span><span>' + esc(duty.note) + '</span></div>';
   } else {
-    $('vSend').innerHTML = pill('warn', '不行') +
-      '<div class="sub">不是從群組聊天室打開，沒有可以自動發送的地方。改用下方「分享到群組」</div>';
-    $('bSend').textContent = '自動發送（需從群組聊天室打開）';
+    h += '<div class="r"><span class="k">值班</span><span class="muted">尚未排班</span></div>';
   }
-  $('bSend').disabled = !canSend;
+  h += '</div><div class="blist">';
+  if (!bs.length) h += '<div class="empty">這天還沒有人借用</div>';
+  bs.forEach(function(b){
+    h += '<div class="bk"><span class="zb ' + b.zone + '">' + esc(ZONE_LABEL[b.zone]) + '</span>' +
+         '<div class="t"><div class="tm">' + hh(b.start) + '–' + hh(b.end) +
+         (b.mine ? '<span class="mine">我的</span>' : '') + '</div>' +
+         '<div class="ds">' + esc(b.purpose) + '・約 ' + esc(b.people) + ' 人・' + esc(b.name) + '</div></div>' +
+         (b.mine && !past ? '<button class="sm" data-cancel="' + esc(b.id) + '">取消</button>' : '') +
+         '</div>';
+  });
+  h += '</div><div class="actions">' +
+       '<button class="btn pri block" data-act="book"' + (past ? ' disabled' : '') + '>' +
+       (past ? '這天已經過去了' : '借用這一天') + '</button></div>';
+  return h;
 }
 
-// ---- 進度與卡住偵測：手機上曾經四項都停在「檢查中」卻沒有任何訊息 ----
-var stageName = '載入中', finished = false, watchdog = null;
-function stage(name){
-  stageName = name;
-  $('stage').textContent = '・' + name;
-  (debugInfo.stages = debugInfo.stages || []).push(name + ' @' + ((Date.now() - T0) / 1000).toFixed(1) + 's');
-  showDebug();
-  clearTimeout(watchdog);
-  watchdog = setTimeout(function(){
-    if (finished) return;
-    fail('卡在「' + stageName + '」超過 12 秒。請按下方「重新整理」，若還是不行，請展開「技術細節」截圖給管理員。');
-    showRetry();
-  }, 12000);
-}
-function done(){ finished = true; clearTimeout(watchdog); $('stage').textContent = '・完成'; }
-function showRetry(){
-  if ($('retry')) return;
-  $('main').insertAdjacentHTML('afterbegin',
-    '<div class="card" id="retry"><div class="btns">' +
-    '<button class="pri" onclick="location.reload()">重新整理</button>' +
-    '<button onclick="location.href=\'https://liff.line.me/' + LIFF_ID + '\'">改用 LINE 視窗開啟</button>' +
-    '</div></div>');
-}
-
-var T0 = Date.now();
-// 在初始化之前先記下環境，卡住時才看得出原因（只記有沒有參數，不記參數內容）
-debugInfo.env = {
-  lineInAppBrowser: /\bLine\//i.test(navigator.userAgent),
-  hasLoginCode: /[?&]code=/.test(location.search),
-  hasLiffState: /liff\.state/.test(location.search),
-  path: location.pathname,
-  ua: navigator.userAgent.replace(/\s+/g, ' ').slice(0, 160)
-};
-try {
-  var tries = +(sessionStorage.getItem('loginTries') || 0);
-  debugInfo.env.loginTries = tries;
-} catch (e) {}
-
-function start(){
-  if (typeof liff === 'undefined') {
-    fail('LINE 元件載入失敗，可能是網路不穩。請按重新整理。');
-    showRetry(); return;
+function showMonth(ym){
+  S.ym = ym;
+  if (!S.sel || ymOf(S.sel) !== ym) {
+    S.sel = (ymOf(todayStr()) === ym) ? todayStr() : ym + '/01';
   }
-  stage('初始化 LINE');
+  renderCal();
+  loadMonth(ym).then(function(){ if (S.tab === 'cal' && S.ym === ym) renderCal(); })
+    .catch(function(e){ notice(e.message); });
+}
+
+// ============================================================
+// 畫面：我的借用
+// ============================================================
+function renderMine(){
+  if (!S.mine) {
+    $('main').innerHTML = '<div class="loading">載入中…</div>';
+    api('mine').then(function(res){ S.mine = res.items; if (S.tab === 'mine') renderMine(); })
+      .catch(function(e){ notice(e.message); });
+    return;
+  }
+  var h = '<div class="card">';
+  if (!S.mine.length) h += '<div class="empty" style="padding:36px 16px">你目前沒有借用</div>';
+  S.mine.slice().sort(function(x, y){
+    return (x.date + hh(x.start)).localeCompare(y.date + hh(y.start));
+  }).forEach(function(b){
+    h += '<div class="bk"><span class="zb ' + b.zone + '">' + esc(ZONE_LABEL[b.zone]) + '</span>' +
+         '<div class="t"><div class="tm">' + esc(dateLabel(b.date)) + '　' + hh(b.start) + '–' + hh(b.end) + '</div>' +
+         '<div class="ds">' + esc(b.purpose) + '・約 ' + esc(b.people) + ' 人</div></div>' +
+         '<button class="sm" data-cancel="' + esc(b.id) + '">取消</button></div>';
+  });
+  $('main').innerHTML = h + '</div>';
+}
+
+// ============================================================
+// 借用表單
+// ============================================================
+var F = null;   // 表單暫存，借用失敗時重開不必重填
+
+function openBookForm(date){
+  var nowH = new Date().getHours();
+  if (!F || F.date !== date) {
+    F = { date: date, zone: 'A', start: 12, end: 18, purpose: '', people: '' };
+    if (date === todayStr() && F.start <= nowH) { F.start = Math.min(nowH + 1, 23); F.end = Math.min(F.start + 2, 24); }
+  }
+  var opt = function(from, to, sel){
+    var s = ''; for (var h = from; h <= to; h++) s += '<option value="' + h + '"' + (h === sel ? ' selected' : '') + '>' + hh(h) + '</option>';
+    return s;
+  };
+  var sh = openSheet(
+    '<h3>借用 ' + esc(dateLabel(date)) + '</h3>' +
+    '<div class="fl">區域</div><div class="seg" id="fZone">' +
+      ['A','F','AF'].map(function(z){
+        return '<button data-zone="' + z + '"' + (F.zone === z ? ' class="on"' : '') + '>' + (z === 'AF' ? '兩區' : ZONE_LABEL[z]) + '</button>';
+      }).join('') + '</div>' +
+    '<div class="fl">時段</div><div class="seg" id="fPre">' +
+      PRESETS.map(function(p, i){
+        return '<button data-pre="' + i + '">' + p.k + ' <span style="font-size:12px;opacity:.8">' + pad(p.s) + '–' + pad(p.e) + '</span></button>';
+      }).join('') + '</div>' +
+    '<div class="times" style="margin-top:10px"><select id="fStart">' + opt(0, 23, F.start) + '</select>' +
+      '<span class="muted">到</span><select id="fEnd">' + opt(1, 24, F.end) + '</select></div>' +
+    '<div id="fHint"></div>' +
+    '<div class="row2"><div><div class="fl">用途</div><input type="text" id="fPurpose" maxlength="40" placeholder="例：讀書會" value="' + esc(F.purpose) + '"></div>' +
+      '<div class="n"><div class="fl">大約人數</div><input type="number" id="fPeople" min="1" max="999" inputmode="numeric" placeholder="人數" value="' + esc(F.people) + '"></div></div>' +
+    '<div class="acts"><button class="btn" data-act="no">取消</button><button class="btn pri" data-act="next" id="fNext">下一步</button></div>',
+    function(act, e){
+      var z = e && e.target.closest && e.target.closest('[data-zone]');
+      var p = e && e.target.closest && e.target.closest('[data-pre]');
+      if (z) { F.zone = z.getAttribute('data-zone'); syncForm(); return; }
+      if (p) { var pr = PRESETS[+p.getAttribute('data-pre')]; F.start = pr.s; F.end = pr.e; syncForm(); return; }
+      if (act === 'no') { sh.close(); return; }
+      if (act === 'next') submitForm(sh);
+    });
+
+  var el = sh.el;
+  el.querySelector('#fStart').onchange = function(){ F.start = +this.value; if (F.end <= F.start) F.end = Math.min(F.start + 1, 24); syncForm(); };
+  el.querySelector('#fEnd').onchange = function(){ F.end = +this.value; if (F.start >= F.end) F.start = Math.max(F.end - 1, 0); syncForm(); };
+  el.querySelector('#fPurpose').oninput = function(){ F.purpose = this.value; };
+  el.querySelector('#fPeople').oninput = function(){ F.people = this.value; };
+
+  function syncForm(){
+    Array.prototype.forEach.call(el.querySelectorAll('[data-zone]'), function(b){
+      b.className = b.getAttribute('data-zone') === F.zone ? 'on' : '';
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-pre]'), function(b){
+      var pr = PRESETS[+b.getAttribute('data-pre')];
+      b.className = (pr.s === F.start && pr.e === F.end) ? 'on' : '';
+    });
+    el.querySelector('#fStart').value = F.start;
+    el.querySelector('#fEnd').value = F.end;
+    var problem = formProblem();
+    el.querySelector('#fHint').innerHTML = problem
+      ? '<div class="hint bad">' + esc(problem) + '</div>'
+      : '<div class="hint ok">' + hh(F.start) + '–' + hh(F.end) + ' ' + ZONE_LABEL[F.zone] + ' 可以借用</div>';
+    el.querySelector('#fNext').disabled = !!problem;
+  }
+  syncForm();
+}
+
+/** 時段本身的問題（衝突、過去時間）；用途與人數在按下一步時再檢查 */
+function formProblem(){
+  if (F.start >= F.end) return '結束時間要晚於開始時間';
+  if (F.date === todayStr() && F.end <= new Date().getHours()) return '不能借已經過去的時間';
+  var clash = bookingsOn(F.date).filter(function(b){
+    return b.start < F.end && F.start < b.end && zoneHit(b.zone, F.zone);
+  })[0];
+  if (clash) {
+    var zs = ZONES[clash.zone].filter(function(z){ return ZONES[F.zone].indexOf(z) >= 0; })
+      .map(function(z){ return z + '區'; }).join('、');
+    return zs + ' ' + hh(Math.max(F.start, clash.start)) + '–' + hh(Math.min(F.end, clash.end)) +
+           ' 已被「' + clash.name + '」借走';
+  }
+  return '';
+}
+
+function submitForm(formSheet){
+  F.purpose = String(F.purpose || '').trim();
+  var people = Math.round(+F.people);
+  if (!F.purpose) { toast('請填寫用途'); return; }
+  if (!(people >= 1)) { toast('請填寫大約人數'); return; }
+  F.people = people;
+  formSheet.close();
+
+  var b = { date: F.date, start: F.start, end: F.end, zone: F.zone, purpose: F.purpose, people: people };
+  confirmSheet({
+    title: '確認借用',
+    html: summaryHtml(b),
+    lead: S.canSend ? '借用後會以你的身分，在你點開連結的那個群組發出通知。'
+                    : '借用後可以選擇分享到群組，讓大家知道。',
+    preview: bookMsg(b),
+    ok: '確定借用'
+  }).then(function(yes){
+    if (!yes) { openBookForm(F.date); return; }
+    toast('借用中…');
+    api('book', b).then(function(res){
+      var item = res.item;
+      F = null; S.mine = null;
+      return loadMonth(ymOf(item.date), true).then(function(){
+        if (S.tab === 'cal') renderCal();
+        return notify(bookMsg(item), '借用成功');
+      });
+    }).catch(function(e){
+      toast(e.message);
+      loadMonth(ymOf(b.date), true).then(function(){ if (S.tab === 'cal') renderCal(); openBookForm(b.date); });
+    });
+  });
+}
+
+// ============================================================
+// 取消
+// ============================================================
+function findBooking(id){
+  var all = [];
+  Object.keys(S.months).forEach(function(k){ all = all.concat(S.months[k].bookings); });
+  if (S.mine) all = all.concat(S.mine);
+  return all.filter(function(b){ return b.id === id; })[0];
+}
+
+function cancelBooking(id){
+  var b = findBooking(id);
+  if (!b) return;
+  confirmSheet({
+    title: '取消這筆借用？',
+    html: summaryHtml(b),
+    lead: S.canSend ? '取消後會在群組通知大家這個時段空出來了。' : '取消後可以選擇分享到群組。',
+    preview: cancelMsg(b),
+    cancel: '不取消', ok: '確定取消'
+  }).then(function(yes){
+    if (!yes) return;
+    api('cancel', { id: id }).then(function(res){
+      var item = res.item;
+      S.mine = null;
+      return loadMonth(ymOf(item.date), true).then(function(){
+        if (S.tab === 'cal') renderCal(); else renderMine();
+        return notify(cancelMsg(item), '已取消');
+      });
+    }).catch(function(e){ toast(e.message); });
+  });
+}
+
+// ============================================================
+// 事件
+// ============================================================
+$('main').addEventListener('click', function(e){
+  var t = e.target.closest('button');
+  if (!t) return;
+  if (t.hasAttribute('data-nav')) {
+    var y = +S.ym.slice(0, 4), m = +S.ym.slice(5, 7) + (+t.getAttribute('data-nav'));
+    if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
+    showMonth(y + '/' + pad(m));
+  } else if (t.hasAttribute('data-day')) {
+    S.sel = t.getAttribute('data-day'); renderCal();
+  } else if (t.getAttribute('data-act') === 'book') {
+    openBookForm(S.sel);
+  } else if (t.hasAttribute('data-cancel')) {
+    cancelBooking(t.getAttribute('data-cancel'));
+  }
+});
+$('tabs').addEventListener('click', function(e){
+  var t = e.target.closest('[data-tab]');
+  if (!t) return;
+  S.tab = t.getAttribute('data-tab');
+  Array.prototype.forEach.call($('tabs').children, function(b){ b.className = b === t ? 'on' : ''; });
+  notice('');
+  if (S.tab === 'cal') showMonth(S.ym); else renderMine();
+});
+
+// ============================================================
+// 啟動
+// ============================================================
+var CONTEXT_LABEL = { group:'群組聊天室', room:'多人聊天室', utou:'一對一聊天室', external:'外部瀏覽器', none:'LINE' };
+
+function boot(){
+  if (typeof liff === 'undefined') { notice('LINE 元件載入失敗，可能是網路不穩，請重新整理。'); return; }
+  var guard = setTimeout(function(){
+    notice('連線太久沒有回應，請關閉後重新開啟。');
+  }, 15000);
+
   liff.init({ liffId: LIFF_ID }).then(function(){
-    debugInfo.env.isInClient = liff.isInClient();
-    debugInfo.env.isLoggedIn = liff.isLoggedIn();
-    if (!liff.isLoggedIn()) {                            // 外部／內建瀏覽器：先導去 LINE 登入
+    if (!liff.isLoggedIn()) {
       var n = 0;
       try { n = +(sessionStorage.getItem('loginTries') || 0) + 1; sessionStorage.setItem('loginTries', n); } catch (e) {}
-      if (n > 2) {                                       // 避免無限跳轉
-        fail('登入後又回到未登入狀態（已重試 ' + (n - 1) + ' 次）。請展開「技術細節」截圖給管理員。');
-        showRetry(); return;
-      }
-      stage('導向 LINE 登入');
+      if (n > 2) { clearTimeout(guard); notice('登入沒有成功，請從 LINE 裡重新打開連結。'); return; }
       liff.login({ redirectUri: location.origin + location.pathname });
       return;
     }
     try { sessionStorage.removeItem('loginTries'); } catch (e) {}
-    stage('已登入，讀取環境');
 
     var ctx = liff.getContext() || {};
-    var type = ctx.type || 'none';
-    Object.assign(debugInfo, {                           // 不能整個覆蓋，會把進度紀錄洗掉
-      contextType: type, viewType: ctx.viewType || '',
-      isInClient: liff.isInClient(), os: liff.getOS(),
-      lineVersion: liff.getLineVersion(), liffVersion: liff.getVersion(),
-      scopes: ctx.scope || []
-    });
-    showDebug();
+    S.ctxType = ctx.type || 'none';
+    S.canSend = liff.isInClient() && S.ctxType === 'group';   // 只在群組裡自動發，免得發進一對一聊天
+    $('foot').textContent = '開啟位置：' + (CONTEXT_LABEL[S.ctxType] || S.ctxType) +
+      '　通知方式：' + (S.canSend ? '自動發到群組' : '分享到群組');
 
-    // 開啟位置 & 能否自動發訊息
-    $('vContext').innerHTML = esc(CONTEXT_LABEL[type] || type) +
-      '<div class="sub">' + esc(type) + '</div>';
-    var canSend = liff.isInClient() && (type === 'group' || type === 'room' || type === 'utou');
-    var chatGroupId = (type === 'group' && ctx.groupId) ? ctx.groupId : '';
-    debugInfo.hasGroupId = !!chatGroupId;                 // 只記有沒有，不記 ID 本身
-    setSendTarget(canSend, type, '');
-    $('bShare').disabled = !liff.isApiAvailable('shareTargetPicker');
-
-    if (!liff.getIDToken()) {
-      $('vLogin').innerHTML = pill('bad', '失敗');
-      $('vMember').innerHTML = pill('wait', '無法確認');
-      fail('拿不到登入憑證。請確認 LIFF 設定有勾 openid。');
-      done(); showRetry();
-      return;
-    }
-
-    // 向後端確認身分與群組成員
-    stage('向伺服器確認身分');
-    api('whoami', { chatGroupId: chatGroupId }).then(function(res){
-      debugInfo.api = res.ok ? { ok: true, isMember: res.me.isMember, groupName: res.me.groupName,
-                                 chatName: res.chat && res.chat.name } : res;
-      if (res.ok && res.chat && res.chat.name) setSendTarget(canSend, type, res.chat.name);
-      showDebug();
-      done();
-      if (!res.ok) {
-        $('vLogin').innerHTML = pill('bad', '失敗');
-        $('vMember').innerHTML = pill('wait', '無法確認');
-        fail(res.error || '後端回應錯誤');
-        showRetry();
+    return api('whoami').then(function(res){
+      clearTimeout(guard);
+      S.me = res.me;
+      if (S.me.picture) { $('avatar').src = S.me.picture; $('avatar').hidden = false; }
+      if (!S.me.isMember) {
+        $('main').innerHTML = '<div class="card pad center"><b>無法使用</b>' +
+          '<p class="muted" style="margin:8px 0 0">場地借用只開放「' + esc(S.me.groupName || '群組') +
+          '」的成員使用。<br>如果你是成員，請聯絡管理人。</p></div>';
         return;
       }
-      var me = res.me;
-      $('vLogin').innerHTML = '你好，' + esc(me.name);
-      if (me.picture) { $('avatar').src = me.picture; $('avatar').hidden = false; }
-      $('vMember').innerHTML = me.isMember
-        ? pill('ok', '是') + '<div class="sub">' + esc(me.groupName) + '</div>'
-        : pill('bad', '否') + '<div class="sub">' + esc(me.groupName || '目前沒有啟用的群組') + '</div>';
-    }).catch(function(e){
-      $('vLogin').innerHTML = pill('bad', '連線失敗');
-      $('vMember').innerHTML = pill('wait', '無法確認');
-      debugInfo.apiError = String(e); showDebug();
-      done();
-      fail('連不到資料伺服器，請稍後再試。');
-      showRetry();
+      $('tabs').hidden = false;
+      var t = todayStr();
+      S.sel = t;
+      showMonth(ymOf(t));
     });
   }).catch(function(e){
-    debugInfo.initError = String(e && e.message || e); showDebug();
-    done();
-    fail('LINE 初始化失敗：' + (e && e.message || e));
-    showRetry();
+    clearTimeout(guard);
+    notice((e && e.message) || '連線失敗，請關閉後重新開啟。');
+    $('main').innerHTML = '';
   });
 }
 
-$('bSend').onclick = function(){
-  confirmSheet({
-    title: '發送測試訊息',
-    lead: '會以你本人的身分發出這則訊息，群組裡的人都看得到。',
-    target: sendWhere.replace(/^「|」$/g, ''),
-    preview: TEST_TEXT,
-    ok: '確定發送'
-  }).then(function(yes){
-    if (!yes) return;
-    liff.sendMessages([{ type: 'text', text: TEST_TEXT }])
-      .then(function(){ toast('已發送'); })
-      .catch(function(e){
-        debugInfo.sendError = String(e && e.message || e); showDebug();
-        toast('發送失敗：' + (e && e.message || e));
-      });
-  });
-};
-
-$('bShare').onclick = function(){
-  liff.shareTargetPicker([{ type: 'text', text: TEST_TEXT }])
-    .then(function(res){ toast(res ? '已分享' : '已取消分享'); })
-    .catch(function(e){
-      debugInfo.shareError = String(e && e.message || e); showDebug();
-      toast('分享失敗：' + (e && e.message || e));
-    });
-};
-
-start();
+boot();
 </script>
 </body>
 </html>
