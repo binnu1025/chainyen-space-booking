@@ -91,7 +91,7 @@
 
 <main id="main">
   <div class="card">
-    <h2>連線檢查</h2>
+    <h2>連線檢查 <span id="stage" style="font-weight:400;color:var(--ink-3)">・載入中</span></h2>
     <div class="row"><div class="k">LINE 登入</div><div class="v" id="vLogin"><span class="pill wait">檢查中</span></div></div>
     <div class="row"><div class="k">群組成員</div><div class="v" id="vMember"><span class="pill wait">檢查中</span></div></div>
     <div class="row"><div class="k">開啟位置</div><div class="v" id="vContext"><span class="pill wait">檢查中</span></div></div>
@@ -142,6 +142,8 @@ function toast(m){
 }
 function fail(msg){
   $('main').insertAdjacentHTML('afterbegin', '<div class="err">' + esc(msg) + '</div>');
+  var d = document.querySelector('details');
+  if (d) d.open = true;                                  // 出錯時自動展開，方便截圖回報
 }
 
 /** 呼叫 GAS 借用 API。用 text/plain 送 JSON，避免跨網域預檢請求 */
@@ -157,18 +159,75 @@ function api(action, extra){
 var debugInfo = {};
 function showDebug(){ $('debug').textContent = JSON.stringify(debugInfo, null, 2); }
 
+// ---- 進度與卡住偵測：手機上曾經四項都停在「檢查中」卻沒有任何訊息 ----
+var stageName = '載入中', finished = false, watchdog = null;
+function stage(name){
+  stageName = name;
+  $('stage').textContent = '・' + name;
+  (debugInfo.stages = debugInfo.stages || []).push(name + ' @' + ((Date.now() - T0) / 1000).toFixed(1) + 's');
+  showDebug();
+  clearTimeout(watchdog);
+  watchdog = setTimeout(function(){
+    if (finished) return;
+    fail('卡在「' + stageName + '」超過 12 秒。請按下方「重新整理」，若還是不行，請展開「技術細節」截圖給管理員。');
+    showRetry();
+  }, 12000);
+}
+function done(){ finished = true; clearTimeout(watchdog); $('stage').textContent = '・完成'; }
+function showRetry(){
+  if ($('retry')) return;
+  $('main').insertAdjacentHTML('afterbegin',
+    '<div class="card" id="retry"><div class="btns">' +
+    '<button class="pri" onclick="location.reload()">重新整理</button>' +
+    '<button onclick="location.href=\'https://liff.line.me/' + LIFF_ID + '\'">改用 LINE 視窗開啟</button>' +
+    '</div></div>');
+}
+
+var T0 = Date.now();
+// 在初始化之前先記下環境，卡住時才看得出原因（只記有沒有參數，不記參數內容）
+debugInfo.env = {
+  lineInAppBrowser: /\bLine\//i.test(navigator.userAgent),
+  hasLoginCode: /[?&]code=/.test(location.search),
+  hasLiffState: /liff\.state/.test(location.search),
+  path: location.pathname,
+  ua: navigator.userAgent.replace(/\s+/g, ' ').slice(0, 160)
+};
+try {
+  var tries = +(sessionStorage.getItem('loginTries') || 0);
+  debugInfo.env.loginTries = tries;
+} catch (e) {}
+
 function start(){
+  if (typeof liff === 'undefined') {
+    fail('LINE 元件載入失敗，可能是網路不穩。請按重新整理。');
+    showRetry(); return;
+  }
+  stage('初始化 LINE');
   liff.init({ liffId: LIFF_ID }).then(function(){
-    if (!liff.isLoggedIn()) { liff.login(); return; }    // 外部瀏覽器：先導去 LINE 登入
+    debugInfo.env.isInClient = liff.isInClient();
+    debugInfo.env.isLoggedIn = liff.isLoggedIn();
+    if (!liff.isLoggedIn()) {                            // 外部／內建瀏覽器：先導去 LINE 登入
+      var n = 0;
+      try { n = +(sessionStorage.getItem('loginTries') || 0) + 1; sessionStorage.setItem('loginTries', n); } catch (e) {}
+      if (n > 2) {                                       // 避免無限跳轉
+        fail('登入後又回到未登入狀態（已重試 ' + (n - 1) + ' 次）。請展開「技術細節」截圖給管理員。');
+        showRetry(); return;
+      }
+      stage('導向 LINE 登入');
+      liff.login({ redirectUri: location.origin + location.pathname });
+      return;
+    }
+    try { sessionStorage.removeItem('loginTries'); } catch (e) {}
+    stage('已登入，讀取環境');
 
     var ctx = liff.getContext() || {};
     var type = ctx.type || 'none';
-    debugInfo = {
+    Object.assign(debugInfo, {                           // 不能整個覆蓋，會把進度紀錄洗掉
       contextType: type, viewType: ctx.viewType || '',
       isInClient: liff.isInClient(), os: liff.getOS(),
       lineVersion: liff.getLineVersion(), liffVersion: liff.getVersion(),
-      scopes: (liff.getContext() && liff.getContext().scope) || []
-    };
+      scopes: ctx.scope || []
+    });
     showDebug();
 
     // 開啟位置 & 能否自動發訊息
@@ -185,17 +244,21 @@ function start(){
       $('vLogin').innerHTML = pill('bad', '失敗');
       $('vMember').innerHTML = pill('wait', '無法確認');
       fail('拿不到登入憑證。請確認 LIFF 設定有勾 openid。');
+      done(); showRetry();
       return;
     }
 
     // 向後端確認身分與群組成員
+    stage('向伺服器確認身分');
     api('whoami').then(function(res){
       debugInfo.api = res.ok ? { ok: true, isMember: res.me.isMember, groupName: res.me.groupName } : res;
       showDebug();
+      done();
       if (!res.ok) {
         $('vLogin').innerHTML = pill('bad', '失敗');
         $('vMember').innerHTML = pill('wait', '無法確認');
         fail(res.error || '後端回應錯誤');
+        showRetry();
         return;
       }
       var me = res.me;
@@ -208,11 +271,15 @@ function start(){
       $('vLogin').innerHTML = pill('bad', '連線失敗');
       $('vMember').innerHTML = pill('wait', '無法確認');
       debugInfo.apiError = String(e); showDebug();
+      done();
       fail('連不到資料伺服器，請稍後再試。');
+      showRetry();
     });
   }).catch(function(e){
     debugInfo.initError = String(e && e.message || e); showDebug();
+    done();
     fail('LINE 初始化失敗：' + (e && e.message || e));
+    showRetry();
   });
 }
 
