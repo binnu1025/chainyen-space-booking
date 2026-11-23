@@ -165,6 +165,7 @@
 <nav class="tabs" id="tabs" hidden>
   <button data-tab="cal" class="on">場地狀況</button>
   <button data-tab="mine">我的借用</button>
+  <button data-tab="admin" id="tabAdmin" hidden>排班系統</button>
 </nav>
 <div id="notice"></div>
 <main id="main"><div class="loading">載入中…</div></main>
@@ -654,11 +655,25 @@ $('main').addEventListener('click', function(e){
 $('tabs').addEventListener('click', function(e){
   var t = e.target.closest('[data-tab]');
   if (!t) return;
+  if (t.getAttribute('data-tab') === 'admin') { openAdmin(); return; }
   S.tab = t.getAttribute('data-tab');
   Array.prototype.forEach.call($('tabs').children, function(b){ b.className = b === t ? 'on' : ''; });
   notice('');
   if (S.tab === 'cal') showMonth(S.ym); else renderMine();
 });
+
+/**
+ * 管理者專用：開啟排班系統。網址由後端只回給管理者，不寫在這個公開檔案裡。
+ * 排班系統要 Google 登入，而 Google 不允許在 LINE 內建瀏覽器登入，所以用手機的瀏覽器開。
+ */
+function openAdmin(){
+  if (!S.me || !S.me.adminUrl) return;
+  try {
+    liff.openWindow({ url: S.me.adminUrl, external: true });
+  } catch (e) {
+    window.open(S.me.adminUrl, '_blank');
+  }
+}
 
 // ============================================================
 // 啟動
@@ -692,6 +707,7 @@ function boot(){
       S.me = res.me;
       if (S.me.picture) { $('avatar').src = S.me.picture; $('avatar').hidden = false; }
       if (S.me.isPresident) $('role').hidden = false;
+      if (S.me.adminUrl) $('tabAdmin').hidden = false;
       if (!S.me.isMember) {
         $('main').innerHTML = '<div class="card pad center"><b>無法使用</b>' +
           '<p class="muted" style="margin:8px 0 0">場地借用只開放「' + esc(S.me.groupName || '群組') +
