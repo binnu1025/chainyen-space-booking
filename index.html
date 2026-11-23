@@ -102,8 +102,8 @@
     <h2>通知測試</h2>
     <div class="note">按下後會以<b>你本人的身分</b>發一則測試訊息。建議在<b>測試群組</b>裡試，不要在正式群組。</div>
     <div class="btns">
-      <button class="pri" id="bSend" disabled>自動發到目前聊天室</button>
-      <button id="bShare" disabled>分享到群組（手動選群組）</button>
+      <button class="pri" id="bSend" disabled>自動發送（需從群組聊天室打開）</button>
+      <button id="bShare" disabled>分享到群組（自己選要發到哪個群組）</button>
     </div>
     <details>
       <summary>技術細節（回報問題時用）</summary>
@@ -158,6 +158,21 @@ function api(action, extra){
 
 var debugInfo = {};
 function showDebug(){ $('debug').textContent = JSON.stringify(debugInfo, null, 2); }
+
+/** 寫清楚「自動發送」會發到哪裡；name 是後端查到的群組名稱，查不到就用聊天室類型描述 */
+var sendWhere = '';
+function setSendTarget(canSend, type, name){
+  sendWhere = name ? '「' + name + '」' : '這個' + (CONTEXT_LABEL[type] || '聊天室');
+  if (canSend) {
+    $('vSend').innerHTML = pill('ok', '可以') + '<div class="sub">會發到' + esc(sendWhere) + '</div>';
+    $('bSend').textContent = '發測試訊息到' + sendWhere;
+  } else {
+    $('vSend').innerHTML = pill('warn', '不行') +
+      '<div class="sub">不是從群組聊天室打開，沒有可以自動發送的地方。改用下方「分享到群組」</div>';
+    $('bSend').textContent = '自動發送（需從群組聊天室打開）';
+  }
+  $('bSend').disabled = !canSend;
+}
 
 // ---- 進度與卡住偵測：手機上曾經四項都停在「檢查中」卻沒有任何訊息 ----
 var stageName = '載入中', finished = false, watchdog = null;
@@ -234,10 +249,9 @@ function start(){
     $('vContext').innerHTML = esc(CONTEXT_LABEL[type] || type) +
       '<div class="sub">' + esc(type) + '</div>';
     var canSend = liff.isInClient() && (type === 'group' || type === 'room' || type === 'utou');
-    $('vSend').innerHTML = canSend
-      ? pill('ok', '可以') + '<div class="sub">借好後能自動發到這個聊天室</div>'
-      : pill('warn', '不行') + '<div class="sub">改用「分享到群組」，多按一下</div>';
-    $('bSend').disabled = !canSend;
+    var chatGroupId = (type === 'group' && ctx.groupId) ? ctx.groupId : '';
+    debugInfo.hasGroupId = !!chatGroupId;                 // 只記有沒有，不記 ID 本身
+    setSendTarget(canSend, type, '');
     $('bShare').disabled = !liff.isApiAvailable('shareTargetPicker');
 
     if (!liff.getIDToken()) {
@@ -250,8 +264,10 @@ function start(){
 
     // 向後端確認身分與群組成員
     stage('向伺服器確認身分');
-    api('whoami').then(function(res){
-      debugInfo.api = res.ok ? { ok: true, isMember: res.me.isMember, groupName: res.me.groupName } : res;
+    api('whoami', { chatGroupId: chatGroupId }).then(function(res){
+      debugInfo.api = res.ok ? { ok: true, isMember: res.me.isMember, groupName: res.me.groupName,
+                                 chatName: res.chat && res.chat.name } : res;
+      if (res.ok && res.chat && res.chat.name) setSendTarget(canSend, type, res.chat.name);
       showDebug();
       done();
       if (!res.ok) {
@@ -284,9 +300,9 @@ function start(){
 }
 
 $('bSend').onclick = function(){
-  if (!confirm('會以你的身分，在目前聊天室發一則測試訊息。確定？')) return;
+  if (!confirm('會以你的身分，發一則測試訊息到' + sendWhere + '。確定？')) return;
   liff.sendMessages([{ type: 'text', text: TEST_TEXT }])
-    .then(function(){ toast('已發送到聊天室'); })
+    .then(function(){ toast('已發送到' + sendWhere); })
     .catch(function(e){
       debugInfo.sendError = String(e && e.message || e); showDebug();
       toast('發送失敗：' + (e && e.message || e));
